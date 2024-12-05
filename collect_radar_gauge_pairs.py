@@ -116,13 +116,16 @@ pr = pyproj.Proj(config_radar["projection"])
 x1, y1 = pr(config_radar["bbox_ll_lon"], config_radar["bbox_ll_lat"])
 x2, y2 = pr(config_radar["bbox_ur_lon"], config_radar["bbox_ur_lat"])
 
-# insert gauge locations into a dictionary
+# insert gauge locations (in grid coordinates and normalized to range [0,1])
+# into a dictionary
 gauge_xy = {}
+gauge_xy_n = {}
 for g in gauge_lonlat:
     x, y = pr(g[1], g[2])
+    gauge_xy[g[0]] = (x, y)
     x = (x - x1) / (x2 - x1)
     y = (y2 - y) / (y2 - y1)
-    gauge_xy[g[0]] = (x, y)
+    gauge_xy_n[g[0]] = (x, y)
 
 print(f"{len(gauge_obs)} observations from {len(gauge_xy)} gauges found.")
 
@@ -193,7 +196,7 @@ while radar_ts <= enddate:
             g_cur = gauge_obs[radar_ts]
             for g in g_cur:
                 fmisid = g[0]
-                x, y = gauge_xy[fmisid][0], gauge_xy[fmisid][1]
+                x, y = gauge_xy_n[fmisid][0], gauge_xy_n[fmisid][1]
                 x_ = int(np.floor(x * radar_rain_accum_shape[1]))
                 y_ = int(np.floor(y * radar_rain_accum_shape[0]))
                 if (
@@ -212,6 +215,9 @@ while radar_ts <= enddate:
                         attrs["distance"] = _compute_nearest_distance(
                             gauge_lonlats[fmisid]
                         )
+
+                    if "gauge_location" in rgpair_attribs:
+                        attrs["gauge_location"] = (x, y)
 
                     if r_obs >= r_thr and g_obs >= g_thr:
                         radar_gauge_pairs[radar_ts][int(fmisid)] = (
