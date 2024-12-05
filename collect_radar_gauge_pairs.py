@@ -116,21 +116,15 @@ pr = pyproj.Proj(config_radar["projection"])
 x1, y1 = pr(config_radar["bbox_ll_lon"], config_radar["bbox_ll_lat"])
 x2, y2 = pr(config_radar["bbox_ur_lon"], config_radar["bbox_ur_lat"])
 
-# TODO: simplify this
-gauge_xy = set()
+# insert gauge locations into a dictionary
+gauge_xy = {}
 for g in gauge_lonlat:
     x, y = pr(g[1], g[2])
     x = (x - x1) / (x2 - x1)
     y = (y2 - y) / (y2 - y1)
-    gauge_xy.add((g[0], x, y))
+    gauge_xy[g[0]] = (x, y)
 
 print(f"{len(gauge_obs)} observations from {len(gauge_xy)} gauges found.")
-
-# insert gauge locations into a dictionary
-gauges_ = {}
-for r in gauge_xy:
-    gauges_[r[0]] = r[1:]
-gauges = gauges_
 
 # insert gauge observations into a dictionary
 gauge_obs_ = defaultdict(list)
@@ -199,7 +193,7 @@ while radar_ts <= enddate:
             g_cur = gauge_obs[radar_ts]
             for g in g_cur:
                 fmisid = g[0]
-                x, y = gauges[fmisid][0], gauges[fmisid][1]
+                x, y = gauge_xy[fmisid][0], gauge_xy[fmisid][1]
                 x_ = int(np.floor(x * radar_rain_accum_shape[1]))
                 y_ = int(np.floor(y * radar_rain_accum_shape[0]))
                 if (
