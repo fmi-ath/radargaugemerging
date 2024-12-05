@@ -12,12 +12,14 @@ Output
 Pairs of co-located radar- and gauge-based rainfall measurements. The output
 file is a pickle dump containing a dictionary of the form
 
-  radar_gauge_pairs[timestamp][fmisid]: [(r_obs_1, g_obs_1),...,(r_obs_n, g_obs_n)]
+  radar_gauge_pairs[timestamp][fmisid]: [(r_obs_1, g_obs_1, attrs),...,(r_obs_n, g_obs_n, attrs)]
 
 where timestamp is a datetime object defining the common time stamp for the
 radar-gauge pairs. This time stamp is taken as the end time of the accumulation
 period. The dictionary contains lists of co-located radar-gauge accumulation
-pairs for each time in the range specified by the command-line arguments.
+pairs for each time in the range specified by the command-line arguments. attrs
+is a dictionary containing the attributes requested in
+collect_gauge_radar_pairs.cfg.
 
 Configuration files (in the config/<profile> directory)
 -------------------------------------------------------
