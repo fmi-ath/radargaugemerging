@@ -116,6 +116,7 @@ pr = pyproj.Proj(config_radar["projection"])
 x1, y1 = pr(config_radar["bbox_ll_lon"], config_radar["bbox_ll_lat"])
 x2, y2 = pr(config_radar["bbox_ur_lon"], config_radar["bbox_ur_lat"])
 
+# TODO: simplify this
 gauge_xy = set()
 for g in gauge_lonlat:
     x, y = pr(g[1], g[2])
@@ -210,11 +211,20 @@ while radar_ts <= enddate:
                     r_obs = radar_rain_accum_cur[y_, x_]
                     g_obs = g[1]
 
+                    attrs = {}
+
+                    # TODO: implement this
                     if "distance" in rgpair_attribs:
-                        dist = _compute_nearest_distance(gauge_lonlats[fmisid])
+                        attrs["distance"] = _compute_nearest_distance(
+                            gauge_lonlats[fmisid]
+                        )
 
                     if r_obs >= r_thr and g_obs >= g_thr:
-                        radar_gauge_pairs[radar_ts][int(fmisid)] = (r_obs, g_obs)
+                        radar_gauge_pairs[radar_ts][int(fmisid)] = (
+                            r_obs,
+                            g_obs,
+                            *attrs,
+                        )
                         num_radar_gauge_pairs += 1
 
             print(f"  Collected {num_radar_gauge_pairs} radar-gauge pairs.")
