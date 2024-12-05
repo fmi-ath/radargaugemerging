@@ -223,7 +223,7 @@ while radar_ts <= enddate:
                         radar_gauge_pairs[radar_ts][int(fmisid)] = (
                             r_obs,
                             g_obs,
-                            *attrs,
+                            attrs,
                         )
                         num_radar_gauge_pairs += 1
 
