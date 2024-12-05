@@ -217,6 +217,7 @@ while radar_ts <= enddate:
                         )
 
                     if "gauge_location" in rgpair_attribs:
+                        x, y = gauge_xy[fmisid][0], gauge_xy[fmisid][1]
                         attrs["gauge_location"] = (x, y)
 
                     if r_obs >= r_thr and g_obs >= g_thr:
