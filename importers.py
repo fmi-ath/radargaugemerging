@@ -161,19 +161,29 @@ def import_opera_odim_hdf5(filename, quantity="DBZH", **kwargs):
 
     for k in f.keys():
         if "dataset" in k:
-            qty = f[k]["what"].attrs["quantity"]
+            try:
+                what_group = f[k]["what"]
+                qty = what_group.attrs["quantity"]
+                nodata = what_group.attrs["nodata"]
+                undetect = what_group.attrs["undetect"]
+                gain = what_group.attrs["gain"]
+                offset = what_group.attrs["offset"]
+            except KeyError:
+                what_group = f[k]["data1"]["what"]
+                qty = what_group.attrs["quantity"]
+                nodata = what_group.attrs["nodata"]
+                undetect = what_group.attrs["undetect"]
+                gain = what_group.attrs["gain"]
+                offset = what_group.attrs["offset"]
+
             if qty.decode() == quantity:
                 data_found = True
 
                 data = f[k]["data1"]["data"][...]
-                nodata_mask = data == f[k]["what"].attrs["nodata"]
-                undetect_mask = data == f[k]["what"].attrs["undetect"]
+                nodata_mask = data == nodata
+                undetect_mask = data == undetect
 
                 radar_composite = data.astype(np.float32)
-
-                gain = f[k]["what"].attrs["gain"]
-                offset = f[k]["what"].attrs["offset"]
-
                 radar_composite = radar_composite * gain + offset
 
                 radar_composite[nodata_mask] = np.nan
