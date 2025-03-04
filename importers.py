@@ -93,7 +93,7 @@ def import_pgm(filename, gzipped=True, **kwargs):
     if not PYPROJ_IMPORTED:
         raise ModuleNotFoundError("pyproj is required but not installed")
 
-    if not gzipped:
+    if not int(gzipped):
         precip = imread(filename)
     else:
         precip = imread(gzip.open(filename, "r"))
@@ -293,7 +293,7 @@ def _get_threshold_value(precip):
 def _import_fmi_pgm_metadata(filename, gzipped=False):
     metadata = {}
 
-    if not gzipped:
+    if not int(gzipped):
         f = open(filename, "rb")
     else:
         f = gzip.open(filename, "rb")
