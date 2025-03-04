@@ -93,7 +93,7 @@ def import_pgm(filename, gzipped=True, **kwargs):
     if not PYPROJ_IMPORTED:
         raise ModuleNotFoundError("pyproj is required but not installed")
 
-    if gzipped is False:
+    if not gzipped:
         precip = imread(filename)
     else:
         precip = imread(gzip.open(filename, "r"))
