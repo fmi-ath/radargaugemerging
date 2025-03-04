@@ -178,7 +178,9 @@ while radar_ts <= enddate:
         if not prev_radar_ts in radar_filenames.keys():
             num_missing += 1
         else:
-            radar_rain_rate, _ = importer(radar_filenames[prev_radar_ts])
+            radar_rain_rate, _ = importer(
+                radar_filenames[prev_radar_ts], **config_ds["radar_importer_kwargs"]
+            )
             radar_rain_accum_cur += radar_rain_rate
             num_found += 1
 
