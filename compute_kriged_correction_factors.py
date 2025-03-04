@@ -22,9 +22,10 @@ from datetime import datetime
 import os
 import pickle
 
-# from matplotlib import pyplot as plt
 import numpy as np
 import pyproj
+
+import exporters
 
 # parse command-line arguments
 argparser = argparse.ArgumentParser()
@@ -76,4 +77,20 @@ sigmasq = sigmasq[0, :]
 zvalues.set_fill_value(np.nan)
 sigmasq.set_fill_value(np.nan)
 
-np.savez_compressed(args.outfile, corr=zvalues.filled(), corr_var=sigmasq.filled())
+if config["output"]["type"] == "geotiff":
+    pr = pyproj.Proj(config["grid"]["projection"])
+
+    ll_x, ll_y = pr(config["grid"]["ll_lon"], config["grid"]["ll_lat"])
+    ur_x, ur_y = pr(config["grid"]["ur_lon"], config["grid"]["ur_lat"])
+
+    bounds = [ll_x, ll_y, ur_x, ur_y]
+    out_rasters = np.stack([zvalues, sigmasq])
+    exporters.export_geotiff(
+        args.outfile, out_rasters, config["grid"]["projection"], bounds
+    )
+elif config["output"]["type"] == "numpy":
+    np.savez_compressed(args.outfile, corr=zvalues.filled(), corr_var=sigmasq.filled())
+else:
+    raise ValueError(
+        f"Output format {config['output']['type']} not supported. The valid options are 'geotiff' and 'numpy'"
+    )
