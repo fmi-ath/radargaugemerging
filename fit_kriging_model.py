@@ -1,7 +1,8 @@
 """Fit a spatiotemporal Kriging model to the given points containing radar- and
 gauge-measured rainfall accumulations. This implementation uses 3d ordinary
 Kriging from PyKrige (https://geostat-framework.readthedocs.io/projects/pykrige/en/stable)
-so that the third dimension is reserved for time.
+so that the third dimension is reserved for time. The fitting is done to
+the variable log10(gauge / radar).
 
 Input
 -----
@@ -38,7 +39,7 @@ config.read(os.path.join("config", args.profile, "fit_kriging_model.cfg"))
 
 radar_gauge_pairs = pickle.load(open(args.rgpairfile, "rb"))
 
-# collect data points for Kriging
+# collect radar-gauge pairs for fitting the model
 x = []
 y = []
 z = []
@@ -55,6 +56,8 @@ for timestamp in radar_gauge_pairs.keys():
         val.append(np.log10(p[1] / p[0]))
 
 if config["kriging"]["time_scaling_factor"] == "auto":
+    # a heuristic value to relate the standard deviations of the
+    # spatial coordinates and timestamps to each other
     anisotropy_scaling_z = 0.5 * (np.std(x) + np.std(y)) / np.std(z)
 else:
     anisotropy_scaling_z = float(config["kriging"]["time_scaling_factor"])
