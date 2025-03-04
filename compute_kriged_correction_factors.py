@@ -7,9 +7,11 @@ Input
 
 Output
 ------
-Compressed npz file containing two arrays:
-  corr: gridded gauge-radar correction factors corr = log10(gauge / radar)
-  corr_var: Kriging variance of the correction factors
+The output is two arrays:
+  1: gridded gauge-radar correction factors corr = log10(gauge / radar)
+  2: Kriging variance of the correction factors
+
+Two output formats are supported: GeoTIFF and compressed npz file.
 
 Configuration files (in the config/<profile> directory)
 -------------------------------------------------------
