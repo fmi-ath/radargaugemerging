@@ -16,6 +16,12 @@ Two output formats are supported: GeoTIFF and compressed npz file.
 Configuration files (in the config/<profile> directory)
 -------------------------------------------------------
 - compute_kriged_correction_factors.cfg
+
+Notes
+-----
+When applying this script, use a model fitted to data that is close to the
+target interpolation time. Also, if any data locations or values change, you
+need to re-run fit_kriging_model.py.
 """
 
 import argparse
