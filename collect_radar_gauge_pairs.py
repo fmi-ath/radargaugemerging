@@ -90,9 +90,9 @@ while curdate <= enddate:
 
         if os.path.exists(fn[0][0]):
             radar_filenames[fn[1][0]] = fn[0][0]
-            # print("Found input file %s." % os.path.basename(fn[0][0]))
+            print("Found radar input file {os.path.basename(fn[0][0])}")
     except FileNotFoundError:
-        pass
+        print(f"Radar data not found for {curdate}")
 
     curdate += timedelta(minutes=radar_accum_period)
 
