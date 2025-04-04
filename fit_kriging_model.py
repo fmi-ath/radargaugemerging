@@ -1,8 +1,9 @@
 """Fit a spatiotemporal Kriging model to the given points containing radar- and
-gauge-measured rainfall accumulations. This implementation uses 3d ordinary
-Kriging from PyKrige (https://geostat-framework.readthedocs.io/projects/pykrige/en/stable)
+gauge-measured rainfall accumulations. This implementation uses methods
+implemented in PyKrige (https://geostat-framework.readthedocs.io/projects/pykrige/en/stable)
 so that the third dimension is reserved for time. The fitting is done to
-the variable log10(gauge / radar).
+the variable log10(gauge / radar). Additional variables may be included when
+using regression-Kriging.
 
 Input
 -----
@@ -25,6 +26,14 @@ import pickle
 
 import numpy as np
 from pykrige.ok3d import OrdinaryKriging3D
+from pykrige.rk import RegressionKriging
+
+try:
+    from sklearn.linear_model import LinearRegression
+
+    SKLEARN_IMPORTED = True
+except ImportError:
+    SKLEARN_IMPORTED = False
 
 # parse command-line arguments
 argparser = argparse.ArgumentParser()
@@ -37,6 +46,11 @@ args = argparser.parse_args()
 config = configparser.ConfigParser()
 config.read(os.path.join("config", args.profile, "fit_kriging_model.cfg"))
 
+if config["kriging"]["method"] not in ["ordinary", "regression"]:
+    raise ValueError(
+        f"unsupported Kriging method {config['kriging']['method']}: choose 'ordinary' or 'regression'"
+    )
+
 radar_gauge_pairs = pickle.load(open(args.rgpairfile, "rb"))
 
 # collect radar-gauge pairs for fitting the model
@@ -45,6 +59,7 @@ y = []
 z = []
 val = []
 
+# TODO: read and process the additional variables needed for regression
 for timestamp in radar_gauge_pairs.keys():
     for fmisid in radar_gauge_pairs[timestamp].keys():
         p = radar_gauge_pairs[timestamp][fmisid]
@@ -62,14 +77,35 @@ if config["kriging"]["time_scaling_factor"] == "auto":
 else:
     anisotropy_scaling_z = float(config["kriging"]["time_scaling_factor"])
 
-model = OrdinaryKriging3D(
-    x,
-    y,
-    z,
-    val,
-    variogram_model="exponential",
-    anisotropy_scaling_z=anisotropy_scaling_z,
-    verbose=True,
-)
+if config["kriging"]["method"] == "ordinary":
+    model = OrdinaryKriging3D(
+        x,
+        y,
+        z,
+        val,
+        variogram_model="exponential",
+        anisotropy_scaling_z=anisotropy_scaling_z,
+        verbose=True,
+    )
+else:
+    if not SKLEARN_IMPORTED:
+        raise ModuleNotFoundError(
+            "sklearn needed for fitting regression models not found"
+        )
+
+    dists = []
+    for timestamp in radar_gauge_pairs.keys():
+        for fmisid in radar_gauge_pairs[timestamp].keys():
+            dists.append(radar_gauge_pairs[timestamp][fmisid][2]["distance_to_radar"])
+
+    regression_model = LinearRegression()
+    model = RegressionKriging(
+        regression_model=regression_model,
+        method="ordinary3d",
+        variogram_model="exponential",
+        anisotropy_scaling=(1, anisotropy_scaling_z),
+        verbose=True,
+    )
+    model.fit(np.array(dists)[:, np.newaxis], np.column_stack([x, y, z]), val)
 
 pickle.dump(model, open(args.outfile, "wb"))
