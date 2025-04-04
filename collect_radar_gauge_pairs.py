@@ -118,6 +118,12 @@ pr = pyproj.Proj(config_radar["projection"])
 x1, y1 = pr(config_radar["bbox_ll_lon"], config_radar["bbox_ll_lat"])
 x2, y2 = pr(config_radar["bbox_ur_lon"], config_radar["bbox_ur_lat"])
 
+# project radar locations into grid coordinates
+radar_xy = {}
+for radar in radar_locs.keys():
+    x, y = pr(radar_locs[radar][0], radar_locs[radar][1])
+    radar_xy[radar] = (x, y)
+
 # insert gauge locations (in grid coordinates and normalized to range [0,1])
 # into a dictionary
 gauge_xy = {}
@@ -147,8 +153,12 @@ rgpair_attribs = config["other"]["attributes"].split(",")
 gauge_lonlats = dict([(v[0], (v[1], v[2])) for v in gauge_lonlat])
 
 
-def _compute_nearest_distance(gauge_lonlat):
-    pass
+def _compute_distance_to_nearest_radar(gauge_xy):
+    dists = [
+        np.linalg.norm(np.array(gauge_xy) - np.array(radar_xy[k])) / 1000
+        for k in radar_locs.keys()
+    ]
+    return np.min(dists)
 
 
 # collect radar-gauge observation pairs
@@ -214,10 +224,9 @@ while radar_ts <= enddate:
 
                     attrs = {}
 
-                    # TODO: implement this
-                    if "distance" in rgpair_attribs:
-                        attrs["distance"] = _compute_nearest_distance(
-                            gauge_lonlats[fmisid]
+                    if "distance_to_radar" in rgpair_attribs:
+                        attrs["distance_to_radar"] = _compute_distance_to_nearest_radar(
+                            gauge_xy[fmisid]
                         )
 
                     if "gauge_location" in rgpair_attribs:
