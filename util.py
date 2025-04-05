@@ -61,8 +61,9 @@ def compute_gridded_distances_to_nearest_radar(
 
     dist_grid = np.ones(grid_x.shape) * np.inf
     for k in radar_locs.keys():
-        dist_grid_cur = np.linalg.norm(
-            np.array(radar_locs[k]) - np.stack([grid_x, grid_y], axis=2)
+        dist_grid_cur = (
+            np.linalg.norm(np.array(radar_locs[k]) - np.stack([grid_x, grid_y], axis=2))
+            / 1000.0
         )
         dist_grid = np.minimum(dist_grid, dist_grid_cur)
 

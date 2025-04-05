@@ -16,6 +16,7 @@ Two output formats are supported: GeoTIFF and compressed npz file.
 Configuration files (in the config/<profile> directory)
 -------------------------------------------------------
 - compute_kriged_correction_factors.cfg
+- radar_locations.yaml
 
 Notes
 -----
@@ -32,8 +33,10 @@ import pickle
 
 import numpy as np
 import pyproj
+import yaml
 
 import exporters
+import util
 
 # parse command-line arguments
 argparser = argparse.ArgumentParser()
@@ -48,6 +51,16 @@ config = configparser.ConfigParser()
 config.read(
     os.path.join("config", args.profile, "compute_kriged_correction_factors.cfg")
 )
+
+if config["kriging"]["method"] not in ["ordinary", "regression"]:
+    raise ValueError(
+        f"unsupported Kriging method {config['kriging']['method']}: choose 'ordinary' or 'regression'"
+    )
+
+if config["kriging"]["method"] == "regression":
+    with open(os.path.join("config", args.profile, "radar_locations.yaml"), "r") as f:
+        config_radarlocs = yaml.safe_load(f)
+    radar_locs = util.read_radar_locations(config_radarlocs)
 
 # read Kriging model
 model = pickle.load(open(args.model, "rb"))
@@ -77,7 +90,10 @@ y = y[:-1]
 ts = datetime.strptime(args.outtime, "%Y%m%d%H%M")
 z = np.ones((1,)) * ts.timestamp()
 
-zvalues, sigmasq = model.execute("grid", x, y, z)
+if config["kriging"]["method"] == "ordinary":
+    zvalues, sigmasq = model.execute("grid", x, y, z)
+else:
+    pass
 
 zvalues = zvalues[0, :]
 sigmasq = sigmasq[0, :]
