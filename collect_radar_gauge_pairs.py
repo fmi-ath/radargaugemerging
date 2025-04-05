@@ -153,14 +153,6 @@ rgpair_attribs = config["other"]["attributes"].split(",")
 gauge_lonlats = dict([(v[0], (v[1], v[2])) for v in gauge_lonlat])
 
 
-def _compute_distance_to_nearest_radar(gauge_xy):
-    dists = [
-        np.linalg.norm(np.array(gauge_xy) - np.array(radar_xy[k])) / 1000
-        for k in radar_locs.keys()
-    ]
-    return np.min(dists)
-
-
 # collect radar-gauge observation pairs
 radar_ts = startdate
 while radar_ts <= enddate:
@@ -225,8 +217,10 @@ while radar_ts <= enddate:
                     attrs = {}
 
                     if "distance_to_radar" in rgpair_attribs:
-                        attrs["distance_to_radar"] = _compute_distance_to_nearest_radar(
-                            gauge_xy[fmisid]
+                        attrs["distance_to_radar"] = (
+                            util.compute_distance_to_nearest_radar(
+                                gauge_xy[fmisid], radar_xy
+                            )
                         )
 
                     if "gauge_location" in rgpair_attribs:
