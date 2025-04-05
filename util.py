@@ -6,7 +6,7 @@ import requests
 import numpy as np
 
 
-def compute_distances_to_nearest_radar(gauge_loc, radar_locs):
+def compute_distance_to_nearest_radar(gauge_loc, radar_locs):
     """Compute the distance of the given gauge location to the nearest radar.
 
     Parameters
@@ -28,7 +28,7 @@ def compute_distances_to_nearest_radar(gauge_loc, radar_locs):
     return np.min(dists)
 
 
-def compute_gridded_distance_to_nearest_radar(
+def compute_gridded_distances_to_nearest_radar(
     grid_ll_x, grid_ll_y, grid_ur_x, grid_ur_y, n_pixels_x, n_pixels_y, radar_locs
 ):
     """Compute distance of the given location to the nearest radar in a grid.
