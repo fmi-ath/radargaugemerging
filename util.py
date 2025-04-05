@@ -3,6 +3,71 @@
 from datetime import datetime, timedelta
 import requests
 
+import numpy as np
+
+
+def compute_distances_to_nearest_radar(gauge_loc, radar_locs):
+    """Compute the distance of the given gauge location to the nearest radar.
+
+    Parameters
+    ----------
+    gauge_loc : array_like
+        x- and y-coordinates of the gauge
+    radar_locs : dict
+        Dictionary with tuples containing x- and y-coordinates of radars.
+
+    Returns
+    -------
+    out : float
+        Distance to the nearest radar.
+    """
+    dists = [
+        np.linalg.norm(np.array(gauge_loc) - np.array(radar_locs[k])) / 1000
+        for k in radar_locs.keys()
+    ]
+    return np.min(dists)
+
+
+def compute_gridded_distance_to_nearest_radar(
+    grid_ll_x, grid_ll_y, grid_ur_x, grid_ur_y, n_pixels_x, n_pixels_y, radar_locs
+):
+    """Compute distance of the given location to the nearest radar in a grid.
+
+    Parameters
+    ----------
+    grid_ll_x : float
+        X-coordinate of the lower-left corner of the grid.
+    grid_ll_y : float
+        Y-coordinate of the lower-left corner of the grid.
+    grid_ur_x : float
+        X-coordinate of the upper-right corner of the grid.
+    grid_ur_y : float
+        Y-coordinate of the upper-right corner of the grid.
+    n_pixels_x : int
+        Number of grid pixels in x-direction.
+    n_pixels_y : int
+        Number of grid pixels in y-direction.
+
+    Returns
+    -------
+    out : numpy.ndarray
+        Gridded distances to the nearest radar.
+    """
+    x = np.linspace(grid_ll_x, grid_ll_y, n_pixels_x + 1)[:-1]
+    x += 0.5 * (x[1] - x[0])
+    y = np.linspace(grid_ur_x, grid_ur_y, n_pixels_y + 1)[:-1]
+    y += 0.5 * (y[1] - y[0])
+    grid_x, grid_y = np.meshgrid(x, y)
+
+    dist_grid = np.ones(grid_x.shape) * np.inf
+    for k in radar_locs.keys():
+        dist_grid_cur = np.linalg.norm(
+            np.array(radar_locs[k]) - np.stack([grid_x, grid_y], axis=2)
+        )
+        dist_grid = np.minimum(dist_grid, dist_grid_cur)
+
+    return dist_grid
+
 
 def query_rain_gauges(
     startdate, enddate, config, ll_lon=None, ll_lat=None, ur_lon=None, ur_lat=None
