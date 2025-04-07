@@ -53,9 +53,9 @@ def compute_gridded_distances_to_nearest_radar(
     out : numpy.ndarray
         Gridded distances to the nearest radar.
     """
-    x = np.linspace(grid_ll_x, grid_ll_y, n_pixels_x + 1)[:-1]
+    x = np.linspace(grid_ll_x, grid_ur_x, n_pixels_x + 1)[:-1]
     x += 0.5 * (x[1] - x[0])
-    y = np.linspace(grid_ur_x, grid_ur_y, n_pixels_y + 1)[:-1]
+    y = np.linspace(grid_ll_y, grid_ur_y, n_pixels_y + 1)[:-1]
     y += 0.5 * (y[1] - y[0])
     grid_x, grid_y = np.meshgrid(x, y)
 
