@@ -137,9 +137,8 @@ if config["output"]["type"] == "geotiff":
 
     bounds = [ll_x, ll_y, ur_x, ur_y]
     out_rasters = np.stack([zvalues, sigmasq])
-    exporters.export_geotiff(
-        args.outfile, out_rasters, config["grid"]["projection"], bounds
-    )
+    fn = args.outfile + ".tif"
+    exporters.export_geotiff(fn, out_rasters, config["grid"]["projection"], bounds)
 elif config["output"]["type"] == "numpy":
     np.savez_compressed(args.outfile, corr=zvalues.filled(), corr_var=sigmasq.filled())
 else:
