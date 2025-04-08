@@ -77,6 +77,10 @@ if config["kriging"]["time_scaling_factor"] == "auto":
 else:
     anisotropy_scaling_z = float(config["kriging"]["time_scaling_factor"])
 
+n_closest_points = int(config["kriging"]["n_closest_points"])
+if n_closest_points == 0:
+    n_closest_points = None
+
 if config["kriging"]["method"] == "ordinary":
     model = OrdinaryKriging3D(
         x,
@@ -85,6 +89,7 @@ if config["kriging"]["method"] == "ordinary":
         val,
         variogram_model="exponential",
         anisotropy_scaling_z=anisotropy_scaling_z,
+        n_closest_points=n_closest_points,
         verbose=True,
     )
 else:
@@ -104,7 +109,7 @@ else:
         method="ordinary3d",
         variogram_model="exponential",
         anisotropy_scaling=(1, anisotropy_scaling_z),
-        n_closest_points=None,
+        n_closest_points=n_closest_points,
         verbose=True,
     )
     model.fit(np.array(dists)[:, np.newaxis], np.column_stack([x, y, z]), val)
