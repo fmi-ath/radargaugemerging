@@ -120,7 +120,7 @@ else:
         radar_xy,
     )
 
-    p = dist_grid.flatten()[:, np.newaxis] * 0 + 50
+    p = dist_grid.flatten()[:, np.newaxis]
     n_x = len(grid_x)
     n_y = len(grid_y)
     grid_x, grid_y = np.meshgrid(grid_x, grid_y)
