@@ -104,6 +104,7 @@ else:
         method="ordinary3d",
         variogram_model="exponential",
         anisotropy_scaling=(1, anisotropy_scaling_z),
+        n_closest_points=None,
         verbose=True,
     )
     model.fit(np.array(dists)[:, np.newaxis], np.column_stack([x, y, z]), val)
