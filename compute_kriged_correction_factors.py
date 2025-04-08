@@ -120,14 +120,15 @@ else:
         radar_xy,
     )
 
-    p = dist_grid.flatten()[:, np.newaxis]
-    grid_x, grid_y, grid_z = np.meshgrid(grid_x, grid_y, grid_z)
-    xp = np.column_stack([grid_x.flatten(), grid_y.flatten(), grid_z.flatten()])
-    zvalues = model.predict(p, xp).reshape(grid_x.shape)
+    p = dist_grid.flatten()[:, np.newaxis] * 0 + 50
+    n_x = len(grid_x)
+    n_y = len(grid_y)
+    grid_x, grid_y = np.meshgrid(grid_x, grid_y)
+    xp = np.column_stack(
+        [grid_x.flatten(), grid_y.flatten(), grid_z[0] * np.ones(grid_x.size)]
+    )
+    zvalues = model.predict(p, xp).reshape((n_y, n_x))
     sigmasq = np.zeros(zvalues.shape)
-
-    zvalues = zvalues[:, :, 0]
-    sigmasq = sigmasq[:, :, 0]
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])
