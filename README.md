@@ -5,14 +5,18 @@ Python package for statistical merging of radar and gauge precipitation measurem
 
 The following scripts/modules have been implemented and tested:
 
-| File                            | Description                                                               |
-|---------------------------------|---------------------------------------------------------------------------|
-| collect_radar_gauge_pairs.py    | script for collecting co-located radar-gauge pairs                        |
-| importers.py                    | reading radar composites                                                  |
-| iterate_kalman_mfb.py           | iterative running of Kalman filter-based mean field bias (MFB) estimation |
-| kalman_mfb.py                   | Kalman filter-based model for mean field bias                             |
-| radar_archive.py                | browsing of radar archives                                                |
-| regression.py                   | multivariate polynomial regression                                        |
+| File                                 | Description                                                               |
+|--------------------------------------|---------------------------------------------------------------------------|
+| collect_radar_gauge_pairs.py         | collect co-located radar-gauge pairs                                      |
+| compute_kriged_correction_factors.py | compute Kriging-interpolated radar correction factors                     |
+| exporters.py                         | methods for writing output files                                          |
+| fit_kriging_model.py                 | fit Kriging model to radar-gauge observation pairs                        |
+| importers.py                         | reading radar composites                                                  |
+| iterate_kalman_mfb.py                | iterative running of Kalman filter-based mean field bias (MFB) estimation |
+| kalman_mfb.py                        | Kalman filter-based model for mean field bias                             |
+| radar_archive.py                     | browsing of radar archives                                                |
+| regression.py                        | multivariate polynomial regression                                        |
+| util.py                              | miscellaneous utility methods                                             |
 
 ## Examples
 
