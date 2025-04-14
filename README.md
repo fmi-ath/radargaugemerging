@@ -45,3 +45,19 @@ The logarithmic MFB estimate
 $$\displaystyle\beta_t=\frac{1}{n}\sum_{i=1}^n\log_{10}\left(\frac{G_{i,t}}{R_{i,t}}\right)$$
 
 is stored in the dictionary contained in the above state file. The dictionary has the key "corr_factor", whose value can be multiplied with radar-measured rain rates/accumulations to obtain the corrected values.
+
+### Compute Kriging-interpolated correction factors
+
+As above, we collect the gauge-radar pairs by running collect_gauge_radar_pairs.py to file `radargaugepairs_202406.dat`:
+
+    python collect_radar_gauge_pairs.py 202406010000 202407010000 radargaugepairs_202406.dat config
+
+Then we fit Kriging model to the radar-gauge pairs and write to file `kriging_model.dat` by running
+
+    python fit_kriging_model.py radargaugepairs_202406.dat kriging_model.dat test
+
+Gridded correction factors are then computed and written to file `kriged_correction_factors_202407010000.tif` by running
+
+    python compute_kriged_correction_factors.py kriging_model.dat 202407010000 kriged_correction_factors_202407010000 config
+
+Note that the chosed time stamp should be within the same interval as the gauge-radar pairs used for model fitting (or at its endpoint). Kriging will give poor results if used for extrapolation.
