@@ -23,9 +23,10 @@ Configuration files (in the config/<profile> directory)
 
 Notes
 -----
-When applying this script, use a model fitted to data that is close to the
-target interpolation time. Also, if any data locations or values change, you
-need to re-run fit_kriging_model.py.
+When applying this script, make sure that the target time is within the time
+range used for model fitting. Kriging does not give good results when applied
+to extrapolation. Also make sure that the output grid is sufficienly covered
+by the gauge locations.
 """
 
 import argparse
