@@ -61,10 +61,9 @@ if config["kriging"]["method"] not in ["ordinary", "regression"]:
         f"unsupported Kriging method {config['kriging']['method']}: choose 'ordinary' or 'regression'"
     )
 
-if config["kriging"]["method"] == "regression":
-    with open(os.path.join("config", args.profile, "radar_locations.yaml"), "r") as f:
-        config_radarlocs = yaml.safe_load(f)
-    radar_locs = util.read_radar_locations(config_radarlocs)
+with open(os.path.join("config", args.profile, "radar_locations.yaml"), "r") as f:
+    config_radarlocs = yaml.safe_load(f)
+radar_locs = util.read_radar_locations(config_radarlocs)
 
 # read Kriging model
 model = pickle.load(open(args.model, "rb"))
@@ -95,6 +94,23 @@ grid_y = grid_y[:-1]
 ts = datetime.strptime(args.outtime, "%Y%m%d%H%M")
 grid_z = np.ones((1,)) * ts.timestamp()
 
+# project radar locations to grid coordinates
+radar_xy = {}
+for radar in radar_locs.keys():
+    x, y = pr(radar_locs[radar][0], radar_locs[radar][1])
+    radar_xy[radar] = (x, y)
+
+# compute gridded distances to the nearest radar for the regression model
+dist_grid = util.compute_gridded_distances_to_nearest_radar(
+    ll_x,
+    ll_y,
+    ur_x,
+    ur_y,
+    int(config["grid"]["n_pixels_x"]),
+    int(config["grid"]["n_pixels_y"]),
+    radar_xy,
+)
+
 if config["kriging"]["method"] == "ordinary":
     zvalues, sigmasq = model.execute("grid", grid_x, grid_y, grid_z)
 
@@ -104,23 +120,6 @@ if config["kriging"]["method"] == "ordinary":
     zvalues.set_fill_value(np.nan)
     sigmasq.set_fill_value(np.nan)
 else:
-    # project radar locations to grid coordinates
-    radar_xy = {}
-    for radar in radar_locs.keys():
-        x, y = pr(radar_locs[radar][0], radar_locs[radar][1])
-        radar_xy[radar] = (x, y)
-
-    # compute gridded distances to the nearest radar for the regression model
-    dist_grid = util.compute_gridded_distances_to_nearest_radar(
-        ll_x,
-        ll_y,
-        ur_x,
-        ur_y,
-        int(config["grid"]["n_pixels_x"]),
-        int(config["grid"]["n_pixels_y"]),
-        radar_xy,
-    )
-
     p = dist_grid.flatten()[:, np.newaxis]
     n_x = len(grid_x)
     n_y = len(grid_y)
@@ -130,6 +129,8 @@ else:
     )
     zvalues = model.predict(p, xp).reshape((n_y, n_x))
     sigmasq = np.zeros(zvalues.shape)
+
+    zvalues[dist_grid > float(config["output"]["max_dist_to_nearest_radar"])] = np.nan
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])
