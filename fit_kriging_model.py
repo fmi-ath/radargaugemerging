@@ -89,7 +89,6 @@ if config["kriging"]["method"] == "ordinary":
         val,
         variogram_model="exponential",
         anisotropy_scaling_z=anisotropy_scaling_z,
-        n_closest_points=n_closest_points,
         verbose=True,
     )
 else:
