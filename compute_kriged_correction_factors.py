@@ -101,7 +101,7 @@ for radar in radar_locs.keys():
     radar_xy[radar] = (x, y)
 
 # compute gridded distances to the nearest radar for the regression model
-dist_grid = util.compute_gridded_distances_to_nearest_radar(
+radar_dist_grid = util.compute_gridded_distances_to_nearest_points(
     ll_x,
     ll_y,
     ur_x,
@@ -119,8 +119,11 @@ if config["kriging"]["method"] == "ordinary":
 
     zvalues.set_fill_value(np.nan)
     sigmasq.set_fill_value(np.nan)
+
+    xp = model.X_ORIG
+    yp = model.Y_ORIG
 else:
-    p = dist_grid.flatten()[:, np.newaxis]
+    p = radar_dist_grid.flatten()[:, np.newaxis]
     n_x = len(grid_x)
     n_y = len(grid_y)
     grid_x, grid_y = np.meshgrid(grid_x, grid_y)
@@ -130,7 +133,25 @@ else:
     zvalues = model.predict(p, xp).reshape((n_y, n_x))
     sigmasq = np.zeros(zvalues.shape)
 
-    zvalues[dist_grid > float(config["output"]["max_dist_to_nearest_radar"])] = np.nan
+    xp = model.krige.model.X_ORIG
+    yp = model.krige.model.Y_ORIG
+
+gauge_xy = {}
+for i in range(len(xp)):
+    gauge_xy[i] = (xp[i], yp[i])
+
+gauge_dist_grid = util.compute_gridded_distances_to_nearest_points(
+    ll_x,
+    ll_y,
+    ur_x,
+    ur_y,
+    int(config["grid"]["n_pixels_x"]),
+    int(config["grid"]["n_pixels_y"]),
+    gauge_xy,
+)
+
+zvalues[radar_dist_grid > float(config["output"]["max_dist_to_nearest_radar"])] = np.nan
+zvalues[gauge_dist_grid > float(config["output"]["max_dist_to_nearest_gauge"])] = np.nan
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])

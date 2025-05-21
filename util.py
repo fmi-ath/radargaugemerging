@@ -28,8 +28,8 @@ def compute_distance_to_nearest_radar(gauge_loc, radar_locs):
     return np.min(dists)
 
 
-def compute_gridded_distances_to_nearest_radar(
-    grid_ll_x, grid_ll_y, grid_ur_x, grid_ur_y, n_pixels_x, n_pixels_y, radar_locs
+def compute_gridded_distances_to_nearest_points(
+    grid_ll_x, grid_ll_y, grid_ur_x, grid_ur_y, n_pixels_x, n_pixels_y, point_locs
 ):
     """Compute distance of the given location to the nearest radar in a grid.
 
@@ -47,11 +47,13 @@ def compute_gridded_distances_to_nearest_radar(
         Number of grid pixels in x-direction.
     n_pixels_y : int
         Number of grid pixels in y-direction.
+    point_locs : dict
+        Dictionary containing (x, y) tuples of point locations.
 
     Returns
     -------
     out : numpy.ndarray
-        Gridded distances to the nearest radar.
+        Gridded distances to the nearest points in point_locs.
     """
     x = np.linspace(grid_ll_x, grid_ur_x, n_pixels_x + 1)[:-1]
     x += 0.5 * (x[1] - x[0])
@@ -60,9 +62,9 @@ def compute_gridded_distances_to_nearest_radar(
     grid_x, grid_y = np.meshgrid(x, y)
 
     dist_grid = np.ones(grid_x.shape) * np.inf
-    for k in radar_locs.keys():
-        dx = np.array(radar_locs[k][0]) - grid_x
-        dy = np.array(radar_locs[k][1]) - grid_y
+    for k in point_locs.keys():
+        dx = np.array(point_locs[k][0]) - grid_x
+        dy = np.array(point_locs[k][1]) - grid_y
         dist_grid_cur = np.sqrt(dx * dx + dy * dy) / 1000.0
         dist_grid = np.minimum(dist_grid, dist_grid_cur)
 
