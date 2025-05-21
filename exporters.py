@@ -40,7 +40,7 @@ def export_geotiff(filename, rasters, projection, bounds):
     nx = rasters.shape[2]
     xres = (xmax - xmin) / nx
     yres = (ymax - ymin) / ny
-    geotransform = (xmin, xres, 0, ymax, 0, -yres)
+    geotransform = (xmin, xres, 0, ymin, 0, yres)
     dst.SetGeoTransform(geotransform)
 
     for i in range(rasters.shape[0]):
