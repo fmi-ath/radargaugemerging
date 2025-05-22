@@ -154,7 +154,7 @@ gauge_dist_grid = util.compute_gridded_distances_to_nearest_points(
 )
 
 zvalues[radar_dist_grid > float(config["output"]["max_dist_to_nearest_radar"])] = np.nan
-zvalues[gauge_dist_grid > float(config["output"]["max_dist_to_nearest_gauge"])] = np.nan
+gauge_dist_mask = gauge_dist_grid > float(config["output"]["max_dist_to_nearest_gauge"])
 
 if config.getboolean("output", "gauge_convex_hull_mask"):
     geom = shapely.MultiPoint(np.column_stack([xp, yp]))
@@ -163,7 +163,7 @@ if config.getboolean("output", "gauge_convex_hull_mask"):
     xscale = (ur_x - ll_x) / int(config["grid"]["n_pixels_x"])
     yscale = (ur_y - ll_y) / int(config["grid"]["n_pixels_y"])
     transform = Affine(xscale, 0, ll_x, 0, yscale, ll_y)
-    mask = features.rasterize(
+    convex_hull_mask = features.rasterize(
         [convex_hull],
         out_shape=zvalues.shape,
         transform=transform,
@@ -171,7 +171,9 @@ if config.getboolean("output", "gauge_convex_hull_mask"):
         default_value=1,
     )
 
-    zvalues[mask == 0] = np.nan
+    zvalues[np.logical_and(convex_hull_mask == 0, gauge_dist_mask)] = np.nan
+else:
+    zvalues[gauge_dist_mask] = np.nan
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])
