@@ -35,8 +35,11 @@ from datetime import datetime
 import os
 import pickle
 
+from affine import Affine
 import numpy as np
 import pyproj
+from rasterio import features
+import shapely
 import yaml
 
 import exporters
@@ -152,6 +155,23 @@ gauge_dist_grid = util.compute_gridded_distances_to_nearest_points(
 
 zvalues[radar_dist_grid > float(config["output"]["max_dist_to_nearest_radar"])] = np.nan
 zvalues[gauge_dist_grid > float(config["output"]["max_dist_to_nearest_gauge"])] = np.nan
+
+if config.getboolean("output", "gauge_convex_hull_mask"):
+    geom = shapely.MultiPoint(np.column_stack([xp, yp]))
+    convex_hull = shapely.convex_hull(geom)
+
+    xscale = (ur_x - ll_x) / int(config["grid"]["n_pixels_x"])
+    yscale = (ur_y - ll_y) / int(config["grid"]["n_pixels_y"])
+    transform = Affine(xscale, 0, ll_x, 0, yscale, ll_y)
+    mask = features.rasterize(
+        [convex_hull],
+        out_shape=zvalues.shape,
+        transform=transform,
+        fill=0,
+        default_value=1,
+    )
+
+    zvalues[mask == 0] = np.nan
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])
