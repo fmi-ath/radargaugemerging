@@ -153,8 +153,10 @@ gauge_dist_grid = util.compute_gridded_distances_to_nearest_points(
     gauge_xy,
 )
 
-zvalues[radar_dist_grid > float(config["output"]["max_dist_to_nearest_radar"])] = np.nan
-gauge_dist_mask = gauge_dist_grid > float(config["output"]["max_dist_to_nearest_gauge"])
+radar_dist_mask = radar_dist_grid < float(config["output"]["max_dist_to_nearest_radar"])
+gauge_dist_mask = gauge_dist_grid < float(config["output"]["max_dist_to_nearest_gauge"])
+
+exclude_mask = radar_dist_mask
 
 if config.getboolean("output", "gauge_convex_hull_mask"):
     geom = shapely.MultiPoint(np.column_stack([xp, yp]))
@@ -171,9 +173,20 @@ if config.getboolean("output", "gauge_convex_hull_mask"):
         default_value=1,
     )
 
-    zvalues[np.logical_and(convex_hull_mask == 0, gauge_dist_mask)] = np.nan
+    exclude_mask = np.logical_and(
+        exclude_mask, np.logical_or(convex_hull_mask == 1, gauge_dist_mask)
+    )
 else:
-    zvalues[gauge_dist_mask] = np.nan
+    exclude_mask = np.logical_and(exclude_mask, gauge_dist_mask)
+
+if float(config["output"]["mask_blur_distance"]) > 0:
+    weights = util.compute_mask_boundary_weights(
+        exclude_mask, float(config["output"]["mask_blur_distance"])
+    )
+    zvalues *= weights
+    zvalues[weights == 0] = np.nan
+else:
+    zvalues[~exclude_mask] = np.nan
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])

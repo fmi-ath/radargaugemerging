@@ -4,6 +4,50 @@ from datetime import datetime, timedelta
 import requests
 
 import numpy as np
+from scipy.spatial import KDTree
+
+
+def compute_mask_boundary_weights(mask, max_dist):
+    """Compute smooth weights around a boolean image mask by applying
+    the logistic function.
+
+    Parameters
+    ----------
+    mask : array_like
+        Boolean mask with True/False corresponding to valid/invalid pixels.
+    max_dist : float
+        Maximum distance from the nearest valid pixel for nonzero weights.
+
+    Returns
+    -------
+    out : numpy.ndarray
+        Weights around nonzero values in mask with decreasing value as a
+        function of distance. Values are in the range [0, 1].
+    """
+    weights = np.zeros(mask.shape)
+
+    coords = np.where(mask)
+
+    tree = KDTree(np.column_stack([coords[0], coords[1]]))
+    coords_compl = np.where(~mask)
+    d, _ = tree.query(
+        np.column_stack([coords_compl[0], coords_compl[1]]),
+        k=1,
+        distance_upper_bound=max_dist,
+    )
+
+    weights[mask] = 1
+
+    def f(x):
+        out = np.zeros(x.shape)
+        mask = x <= max_dist
+        out[mask] = 1 / (1 + np.exp(-x[mask]))
+
+        return out
+
+    weights[coords_compl[0], coords_compl[1]] = f(-(d - 0.5 * max_dist) / max_dist * 10)
+
+    return weights
 
 
 def compute_distance_to_nearest_radar(gauge_loc, radar_locs):
