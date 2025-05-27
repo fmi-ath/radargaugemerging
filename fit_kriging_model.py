@@ -70,6 +70,11 @@ for timestamp in radar_gauge_pairs.keys():
         z.append(timestamp.timestamp())
         val.append(np.log10(p[1] / p[0]))
 
+if len(val) < int(config["kriging"]["min_valid_points"]):
+    raise Exception(
+        f"{len(val)} radar-gauge pairs found but {config['kriging']['min_valid_points']} required"
+    )
+
 if config["kriging"]["time_scaling_factor"] == "auto":
     # a heuristic value to relate the standard deviations of the
     # spatial coordinates and timestamps to each other
