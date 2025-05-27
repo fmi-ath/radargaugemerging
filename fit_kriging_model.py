@@ -81,6 +81,19 @@ n_closest_points = int(config["kriging"]["n_closest_points"])
 if n_closest_points == 0:
     n_closest_points = None
 
+val = np.array(val)
+mask = np.logical_and(
+    val >= float(config["kriging"]["min_corr_factor"]),
+    val <= float(config["kriging"]["max_corr_factor"]),
+)
+
+print(f"Number of valid / all radar-gauge pairs: {np.sum(mask)} / {len(x)}")
+
+x = np.array(x)[mask]
+y = np.array(y)[mask]
+z = np.array(z)[mask]
+val = val[mask]
+
 if config["kriging"]["method"] == "ordinary":
     model = OrdinaryKriging3D(
         x,
@@ -101,6 +114,8 @@ else:
     for timestamp in radar_gauge_pairs.keys():
         for fmisid in radar_gauge_pairs[timestamp].keys():
             dists.append(radar_gauge_pairs[timestamp][fmisid][2]["distance_to_radar"])
+
+    dists = np.array(dists)[mask]
 
     regression_model = LinearRegression()
     model = RegressionKriging(
