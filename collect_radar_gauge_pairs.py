@@ -241,18 +241,24 @@ while radar_ts <= enddate:
 
     radar_ts += timedelta(minutes=gauge_accum_period)
 
-mae = 0.0
-n = 0
+errors = []
 for p1 in radar_gauge_pairs.values():
     for p2 in p1.values():
-        mae += abs(p2[0] - p2[1])
-        n += 1
+        errors.append(p2[0] - p2[1])
+errors = np.array(errors)
 
-mae = mae / n if n > 0 else np.nan
+if len(errors > 0):
+    mae = np.mean(np.abs(errors))
+    me = np.mean(errors)
+    std = np.std(errors)
 
-print(f"Total number of radar-gauge pairs: {n}")
-print(f"Mean absolute radar-gauge error: {mae}")
+    print(f"Total number of radar-gauge pairs: {len(errors)}")
+    print(f"Mean absolute radar-gauge error: {mae}")
+    print(f"Mean radar-gauge error: {me}")
+    print(f"Std. dev. of error: {std}")
 
-print(f"Wrote output to {args.outfile}.")
+    print(f"Wrote output to {args.outfile}.")
 
-pickle.dump(radar_gauge_pairs, open(args.outfile, "wb"))
+    pickle.dump(radar_gauge_pairs, open(args.outfile, "wb"))
+else:
+    print("No output file written: no valid radar-gauge pairs found")
