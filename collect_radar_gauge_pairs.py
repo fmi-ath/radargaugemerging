@@ -177,6 +177,8 @@ while radar_ts <= enddate:
 
     for t in range(num_accum_timesteps):
         prev_radar_ts = radar_ts - t * timedelta(minutes=radar_accum_period)
+        if t == 0:
+            accum_start_ts = prev_radar_ts
         if not prev_radar_ts in radar_filenames.keys():
             num_missing += 1
         else:
@@ -191,10 +193,10 @@ while radar_ts <= enddate:
             f"  Skipping {radar_ts}: not enough previous files found for computing accumulated radar rainfall."
         )
     elif num_found == 0:
-        print(f"  No radar composites found between {prev_radar_ts} - {radar_ts}.")
+        print(f"  No radar composites found between {accum_start_ts} - {radar_ts}.")
     else:
         print(
-            f"  Computed radar accumulation between {prev_radar_ts} - {radar_ts} from {num_found} time stamps."
+            f"  Computed radar accumulation between {accum_start_ts} - {radar_ts} from {num_found} time stamps."
         )
         radar_rain_accum_cur /= num_found
         radar_rain_accum_shape = radar_rain_accum_cur.shape
