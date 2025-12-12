@@ -112,6 +112,13 @@ gauge_lonlat, gauge_obs = util.query_rain_gauges(
     ur_lat=float(config["bbox"]["ur_lat"]),
 )
 
+if config_ds["gauge"]["accumulate"] == "true":
+    gauge_obs = util.compute_gauge_accumulations(
+        gauge_obs,
+        int(config_ds["gauge_accumulation"]["accum_period"]),
+        int(config_ds["gauge_accumulation"]["timestep"]),
+    )
+
 # convert the lon-lat coordinates into grid coordinates (pixels)
 pr = pyproj.Proj(config_radar["projection"])
 

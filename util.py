@@ -1,10 +1,67 @@
 """Miscellaneous utility functions."""
 
+from collections import defaultdict
 from datetime import datetime, timedelta
 import requests
 
 import numpy as np
 from scipy.spatial import KDTree
+
+
+def compute_gauge_accumulations(gauge_obs, accum_period, timestep):
+    """Compute accumulated rainfall from gauge observations read by using
+    query_rain_gauges. Time periods with one or more missing observations are
+    skipped.
+
+    Parameters
+    ----------
+    gauge_obs : list
+        List of gauge observation tuples. See the output of query_rain_gauges.
+    accum_period : int
+        Length of the accumulation period (minutes).
+    timestep : int
+        Time step between gauge observations (minutes).
+
+    Returns
+    -------
+    out : list
+        List of triplets having the same elements as the output of
+        query_rain_gauges.
+    """
+    gauge_obs_dict = defaultdict(dict)
+    for g in gauge_obs:
+        gauge_obs_dict[g[1]][g[0]] = g[2]
+
+    out = []
+
+    for sid in gauge_obs_dict.keys():
+        startdate = min(gauge_obs_dict[sid].keys())
+        enddate = max(gauge_obs_dict[sid].keys())
+
+        curdate = startdate
+        while curdate <= enddate:
+            curdate_window = curdate - timedelta(minutes=accum_period)
+            missing_data = False
+            accum = 0
+
+            while curdate_window <= curdate:
+                if curdate_window in gauge_obs_dict[sid].keys():
+                    v = gauge_obs_dict[sid][curdate_window]
+                    if np.isfinite(v):
+                        accum += v
+                    else:
+                        missing_data = True
+                else:
+                    missing_data = True
+
+                curdate_window = curdate_window + timedelta(minutes=timestep)
+
+            if not missing_data:
+                out.append((curdate, sid, accum))
+
+            curdate = curdate + timedelta(minutes=timestep)
+
+    return out
 
 
 def compute_mask_boundary_weights(mask, max_dist):
