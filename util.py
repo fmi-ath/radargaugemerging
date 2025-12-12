@@ -175,8 +175,10 @@ def query_rain_gauges(
                     continue
                 if ur_lat is not None and lat > ur_lat:
                     continue
-                gauge_lonlat.add((fmisid, lon, lat))
-                gauge_obs.append((obstime, fmisid, obs))
+
+                if np.isfinite(obs):
+                    gauge_lonlat.add((fmisid, lon, lat))
+                    gauge_obs.append((obstime, fmisid, obs))
 
     return gauge_lonlat, gauge_obs
 
