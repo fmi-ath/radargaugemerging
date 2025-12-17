@@ -49,7 +49,7 @@ def compute_gauge_accumulations(
 
         curdate = startdate
         while curdate <= enddate:
-            curdate_window = curdate - timedelta(minutes=target_accum_period)
+            curdate_window = curdate - timedelta(minutes=target_accum_period - timestep)
             missing_data = False
             accum = 0
 
