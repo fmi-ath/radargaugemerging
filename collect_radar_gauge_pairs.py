@@ -212,8 +212,7 @@ while radar_ts <= enddate:
             f"  Computed radar accumulation between {accum_start_ts} - {radar_ts} from {num_found} time stamps."
         )
         radar_rain_accum_cur /= num_found
-        # TODO: check that the accumulation is calculated properly when the
-        # length is different from one hour
+        radar_rain_accum_cur *= gauge_accum_period / 60
         radar_rain_accum_shape = radar_rain_accum_cur.shape
 
         if radar_ts in gauge_obs.keys():
