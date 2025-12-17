@@ -70,7 +70,12 @@ radar_locs = util.read_radar_locations(config_radarlocs)
 
 radar_timestep = int(config_radar["timestep"])
 radar_accum_period = int(config_ds["radar"]["accum_period"])
-gauge_accum_period = int(config_ds["gauge"]["accum_period"])
+gauge_accum_period = (
+    int(config_ds["gauge"]["accum_period"])
+    if config_ds["gauge"]["accumulate"] == "false"
+    else int(config_ds["gauge_accumulation"]["target_accum_period"])
+)
+gauge_timestep = int(config_ds["gauge"]["timestep"])
 
 browser = radar_archive.Browser(
     config_radar["root_path"],
@@ -115,8 +120,9 @@ gauge_lonlat, gauge_obs = util.query_rain_gauges(
 if config_ds["gauge"]["accumulate"] == "true":
     gauge_obs = util.compute_gauge_accumulations(
         gauge_obs,
-        int(config_ds["gauge_accumulation"]["accum_period"]),
-        int(config_ds["gauge_accumulation"]["timestep"]),
+        int(config_ds["gauge_accumulation"]["obs_accum_period"]),
+        int(config_ds["gauge_accumulation"]["target_accum_period"]),
+        int(config_ds["gauge"]["timestep"]),
     )
 
 # convert the lon-lat coordinates into grid coordinates (pixels)
@@ -206,6 +212,8 @@ while radar_ts <= enddate:
             f"  Computed radar accumulation between {accum_start_ts} - {radar_ts} from {num_found} time stamps."
         )
         radar_rain_accum_cur /= num_found
+        # TODO: check that the accumulation is calculated properly when the
+        # length is different from one hour
         radar_rain_accum_shape = radar_rain_accum_cur.shape
 
         if radar_ts in gauge_obs.keys():
@@ -248,7 +256,7 @@ while radar_ts <= enddate:
 
             print(f"  Collected {num_radar_gauge_pairs} radar-gauge pairs.")
 
-    radar_ts += timedelta(minutes=gauge_accum_period)
+    radar_ts += timedelta(minutes=gauge_timestep)
 
 errors = []
 for p1 in radar_gauge_pairs.values():

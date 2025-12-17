@@ -8,7 +8,12 @@ import numpy as np
 from scipy.spatial import KDTree
 
 
-def compute_gauge_accumulations(gauge_obs, accum_period, timestep):
+def compute_gauge_accumulations(
+    gauge_obs,
+    obs_accum_period,
+    target_accum_period,
+    timestep,
+):
     """Compute accumulated rainfall from gauge observations read by using
     query_rain_gauges. Time periods with one or more missing observations are
     skipped.
@@ -17,8 +22,10 @@ def compute_gauge_accumulations(gauge_obs, accum_period, timestep):
     ----------
     gauge_obs : list
         List of gauge observation tuples. See the output of query_rain_gauges.
-    accum_period : int
-        Length of the accumulation period (minutes).
+    obs_accum_period : int
+        Accumulation period of the observations (minutes).
+    target_accum_period : int
+        Length of the accumulation period in the output (minutes).
     timestep : int
         Time step between gauge observations (minutes).
 
@@ -34,13 +41,15 @@ def compute_gauge_accumulations(gauge_obs, accum_period, timestep):
 
     out = []
 
+    multiplier = timestep / obs_accum_period
+
     for sid in gauge_obs_dict.keys():
         startdate = min(gauge_obs_dict[sid].keys())
         enddate = max(gauge_obs_dict[sid].keys())
 
         curdate = startdate
         while curdate <= enddate:
-            curdate_window = curdate - timedelta(minutes=accum_period)
+            curdate_window = curdate - timedelta(minutes=target_accum_period)
             missing_data = False
             accum = 0
 
@@ -48,7 +57,7 @@ def compute_gauge_accumulations(gauge_obs, accum_period, timestep):
                 if curdate_window in gauge_obs_dict[sid].keys():
                     v = gauge_obs_dict[sid][curdate_window]
                     if np.isfinite(v):
-                        accum += v
+                        accum += v * multiplier
                     else:
                         missing_data = True
                 else:
