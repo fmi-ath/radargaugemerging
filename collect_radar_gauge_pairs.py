@@ -263,7 +263,7 @@ for p1 in radar_gauge_pairs.values():
         errors.append(p2[0] - p2[1])
 errors = np.array(errors)
 
-if len(errors > 0):
+if len(errors) > 0:
     mae = np.mean(np.abs(errors))
     me = np.mean(errors)
     std = np.std(errors)
