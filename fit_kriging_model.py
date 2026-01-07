@@ -105,7 +105,7 @@ if config["kriging"]["method"] == "ordinary":
         y,
         z,
         val,
-        variogram_model="exponential",
+        variogram_model="spherical",
         anisotropy_scaling_z=anisotropy_scaling_z,
         verbose=True,
     )
@@ -126,7 +126,7 @@ else:
     model = RegressionKriging(
         regression_model=regression_model,
         method="ordinary3d",
-        variogram_model="exponential",
+        variogram_model="spherical",
         anisotropy_scaling=(1, anisotropy_scaling_z),
         n_closest_points=n_closest_points,
         verbose=True,
