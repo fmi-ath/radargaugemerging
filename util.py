@@ -215,6 +215,7 @@ def query_rain_gauges(
         "endtime": datetime.strftime(enddate + timedelta(hours=3), "%Y%m%dT%H%M"),
         "timestep": "data",
         "format": "json",
+        "precision": "double",
     }
 
     result = requests.get("http://smartmet.fmi.fi/timeseries", params=payload).json()
