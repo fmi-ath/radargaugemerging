@@ -57,6 +57,12 @@ enddate = datetime.strptime(args.enddate, "%Y%m%d%H%M")
 config = configparser.ConfigParser()
 config.read(os.path.join("config", args.profile, "collect_radar_gauge_pairs.cfg"))
 
+if config["gauge_selection"]["excluded_station_file"] != "":
+    lines = open(config["gauge_selection"]["excluded_station_file"], "r").readlines()
+    excluded_station_ids = [l.strip("\n") for l in lines]
+else:
+    excluded_station_ids = None
+
 config_ds = configparser.ConfigParser(interpolation=None)
 config_ds.read(os.path.join("config", args.profile, "datasources.cfg"))
 
@@ -220,6 +226,10 @@ while radar_ts <= enddate:
             g_cur = gauge_obs[radar_ts]
             for g in g_cur:
                 fmisid = g[0]
+
+                if excluded_station_ids is not None and fmisid in excluded_station_ids:
+                    continue
+
                 x, y = gauge_xy_n[fmisid][0], gauge_xy_n[fmisid][1]
                 x_ = int(np.floor(x * radar_rain_accum_shape[1]))
                 y_ = int(np.floor(y * radar_rain_accum_shape[0]))
