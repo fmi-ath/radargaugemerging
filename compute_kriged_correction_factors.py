@@ -195,9 +195,12 @@ if float(config["output"]["mask_blur_distance"]) > 0:
         exclude_mask, float(config["output"]["mask_blur_distance"])
     )
     zvalues *= weights
+    sigmasq *= weights
     zvalues[weights == 0] = 0
+    sigmasq[weights == 0] = 0
 else:
     zvalues[~exclude_mask] = 0
+    sigmasq[~exclude_mask] = 0
 
 if config["output"]["type"] == "geotiff":
     pr = pyproj.Proj(config["grid"]["projection"])
