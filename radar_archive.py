@@ -9,7 +9,7 @@ class Browser:
     """Implements a browser for listing archives radar composites that match the
     given date."""
 
-    def __init__(self, root_path, path_fmt, fn_pattern, fn_ext, timestep):
+    def __init__(self, root_path, path_fmt, fn_pattern, fn_exts, timestep):
         """Create a radar archive browser.
 
         Parameters
@@ -22,15 +22,15 @@ class Browser:
         fn_pattern : str
           The name pattern of the input files without extension. May contain time
           specifiers (e.g. %H, %M and %S).
-        fn_ext : str
-          Extension of the input files.
+        fn_exts : list
+          List of possible input file name extensions.
         timestep : float
           Time step between consecutive input files (minutes).
         """
         self.__root_path = root_path
         self.__path_fmt = path_fmt
         self.__fn_pattern = fn_pattern
-        self.__fn_ext = fn_ext
+        self.__fn_exts = fn_exts
         self.__timestep = timestep
 
     def listfiles(self, date, num_prev_files=0):
@@ -57,21 +57,21 @@ class Browser:
             self.__root_path,
             self.__path_fmt,
             self.__fn_pattern,
-            self.__fn_ext,
+            self.__fn_exts,
             self.__timestep,
             num_prev_files=num_prev_files,
         )
 
 
 def _find_by_date(
-    date, root_path, path_fmt, fn_pattern, fn_ext, timestep, num_prev_files=0
+    date, root_path, path_fmt, fn_pattern, fn_exts, timestep, num_prev_files=0
 ):
     filenames = []
     timestamps = []
 
     for i in range(num_prev_files + 1):
         curdate = date - timedelta(minutes=i * timestep)
-        fn = _find_matching_filename(curdate, root_path, path_fmt, fn_pattern, fn_ext)
+        fn = _find_matching_filename(curdate, root_path, path_fmt, fn_pattern, fn_exts)
         filenames.append(fn)
 
         timestamps.append(curdate)
@@ -85,24 +85,28 @@ def _find_by_date(
         return (filenames, timestamps)
 
 
-def _find_matching_filename(date, root_path, path_fmt, fn_pattern, fn_ext):
+def _find_matching_filename(date, root_path, path_fmt, fn_pattern, fn_exts):
     path = _generate_path(date, root_path, path_fmt)
     fn = None
 
     if os.path.exists(path):
-        fn = datetime.strftime(date, fn_pattern) + "." + fn_ext
+        for fn_ext in fn_exts:
+            fn = datetime.strftime(date, fn_pattern) + "." + fn_ext
 
-        # test for wildcars
-        if "?" in fn:
-            filenames = os.listdir(path)
-            if len(filenames) > 0:
-                for filename in filenames:
-                    if fnmatch.fnmatch(filename, fn):
-                        fn = filename
-                        break
+            # test for wildcards
+            if "?" in fn:
+                filenames = os.listdir(path)
+                if len(filenames) > 0:
+                    for filename in filenames:
+                        if fnmatch.fnmatch(filename, fn):
+                            fn = filename
+                            break
 
-        fn = os.path.join(path, fn)
-        fn = fn if os.path.exists(fn) else None
+            fn = os.path.join(path, fn)
+            if os.path.exists(fn):
+                return fn
+            else:
+                fn = None
 
     return fn
 

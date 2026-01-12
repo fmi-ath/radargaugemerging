@@ -87,7 +87,7 @@ browser = radar_archive.Browser(
     config_radar["root_path"],
     config_radar["path_fmt"],
     config_radar["fn_pattern"],
-    config_radar["fn_ext"],
+    config_radar["fn_exts"].split(","),
     radar_timestep,
 )
 

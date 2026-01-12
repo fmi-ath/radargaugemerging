@@ -168,7 +168,7 @@ def import_netcdf(filename, corr_refl=True, **kwargs):
     return precip, dict()
 
 
-def import_pgm(filename, gzipped=True, **kwargs):
+def import_pgm(filename, **kwargs):
     """
     Import a 8-bit PGM radar reflectivity composite from the FMI archive and
     convert it to precipitation rate (mm/h).
@@ -177,8 +177,6 @@ def import_pgm(filename, gzipped=True, **kwargs):
     ----------
     filename: str
         Name of the file to read.
-    gzipped: bool
-        If True, the input file is treated as a compressed gzip file.
 
     Raises
     ------
@@ -193,6 +191,9 @@ def import_pgm(filename, gzipped=True, **kwargs):
 
     Notes
     -----
+    Reading gzipped PGM files is also supported. First the method tries to read
+    without gzip. If this fails, the file is read as a gzip file.
+
     Reading georeferencing metadata is supported only for stereographic
     projection. For other projections, the keys related to georeferencing are
     not set.
@@ -200,10 +201,13 @@ def import_pgm(filename, gzipped=True, **kwargs):
     if not PYPROJ_IMPORTED:
         raise ModuleNotFoundError("pyproj is required but not installed")
 
-    if not int(gzipped):
+    try:
         precip = imread(filename)
-    else:
+        gzipped = False
+    except:
         precip = imread(gzip.open(filename, "r"))
+        gzipped = True
+
     pgm_metadata = _import_fmi_pgm_metadata(filename, gzipped=gzipped)
     geodata = _import_fmi_pgm_geodata(pgm_metadata)
 
