@@ -97,22 +97,24 @@ grid_y = grid_y[:-1]
 ts = datetime.strptime(args.outtime, "%Y%m%d%H%M")
 grid_z = np.ones((1,)) * ts.timestamp()
 
-# project radar locations to grid coordinates
-radar_xy = {}
-for radar in radar_locs.keys():
-    x, y = pr(radar_locs[radar][0], radar_locs[radar][1])
-    radar_xy[radar] = (x, y)
+max_dist_to_nearest_radar = float(config["output"]["max_dist_to_nearest_radar"])
+if max_dist_to_nearest_radar > 0 or config["kriging"]["method"] == "regression":
+    # project radar locations to grid coordinates
+    radar_xy = {}
+    for radar in radar_locs.keys():
+        x, y = pr(radar_locs[radar][0], radar_locs[radar][1])
+        radar_xy[radar] = (x, y)
 
-# compute gridded distances to the nearest radar for the regression model
-radar_dist_grid = util.compute_gridded_distances_to_nearest_points(
-    ll_x,
-    ll_y,
-    ur_x,
-    ur_y,
-    int(config["grid"]["n_pixels_x"]),
-    int(config["grid"]["n_pixels_y"]),
-    radar_xy,
-)
+    # compute gridded distances to the nearest radar for the regression model
+    radar_dist_grid = util.compute_gridded_distances_to_nearest_points(
+        ll_x,
+        ll_y,
+        ur_x,
+        ur_y,
+        int(config["grid"]["n_pixels_x"]),
+        int(config["grid"]["n_pixels_y"]),
+        radar_xy,
+    )
 
 if config["kriging"]["method"] == "ordinary":
     zvalues, sigmasq = model.execute("grid", grid_x, grid_y, grid_z)
@@ -144,18 +146,26 @@ gauge_xy = {}
 for i in range(len(xp)):
     gauge_xy[i] = (xp[i], yp[i])
 
-gauge_dist_grid = util.compute_gridded_distances_to_nearest_points(
-    ll_x,
-    ll_y,
-    ur_x,
-    ur_y,
-    int(config["grid"]["n_pixels_x"]),
-    int(config["grid"]["n_pixels_y"]),
-    gauge_xy,
-)
+if max_dist_to_nearest_radar > 0:
+    radar_dist_mask = radar_dist_grid < max_dist_to_nearest_radar
+else:
+    radar_dist_mask = np.ones((n_pixels_y, n_pixels_x), dtype=bool)
 
-radar_dist_mask = radar_dist_grid < float(config["output"]["max_dist_to_nearest_radar"])
-gauge_dist_mask = gauge_dist_grid < float(config["output"]["max_dist_to_nearest_gauge"])
+max_dist_to_nearest_gauge = float(config["output"]["max_dist_to_nearest_gauge"])
+if max_dist_to_nearest_gauge > 0:
+    gauge_dist_grid = util.compute_gridded_distances_to_nearest_points(
+        ll_x,
+        ll_y,
+        ur_x,
+        ur_y,
+        int(config["grid"]["n_pixels_x"]),
+        int(config["grid"]["n_pixels_y"]),
+        gauge_xy,
+    )
+
+    gauge_dist_mask = gauge_dist_grid < max_dist_to_nearest_gauge
+else:
+    gauge_dist_mask = np.ones((n_pixels_y, n_pixels_x), dtype=bool)
 
 exclude_mask = radar_dist_mask
 
