@@ -120,8 +120,9 @@ if config["kriging"]["method"] == "ordinary":
     zvalues = zvalues[0, :]
     sigmasq = sigmasq[0, :]
 
-    zvalues.set_fill_value(np.nan)
-    sigmasq.set_fill_value(np.nan)
+    if isinstance(zvalues, np.ma.MaskedArray):
+        zvalues.set_fill_value(np.nan)
+        sigmasq.set_fill_value(np.nan)
 
     xp = model.X_ORIG
     yp = model.Y_ORIG
