@@ -183,7 +183,7 @@ gauge_lonlats = dict([(v[0], (v[1], v[2])) for v in gauge_lonlat])
 radar_ts = startdate
 while radar_ts <= enddate:
     print(
-        f"Collecting radar-gauge pairs between {enddate - timedelta(minutes=gauge_accum_period)} - {enddate}:"
+        f"Collecting radar-gauge pairs for {radar_ts - timedelta(minutes=gauge_accum_period)} - {radar_ts}:"
     )
 
     importer = importers.get_method(config_radar["importer"])
@@ -194,17 +194,16 @@ while radar_ts <= enddate:
     num_accum_timesteps = gauge_accum_period / radar_accum_period
     if int(num_accum_timesteps) != num_accum_timesteps:
         raise ValueError(
-            "gauge accumulation period not divisible by radar accumulation period"
+            f"gauge accumulation period ({gauge_accum_period}) not divisible by radar accumulation period ({radar_accum_period})"
         )
     num_accum_timesteps = int(num_accum_timesteps)
     num_missing = 0
     num_found = 0
     radar_rain_accum_cur = 0.0
 
+    accum_start_ts = radar_ts - timedelta(minutes=gauge_accum_period)
     for t in range(num_accum_timesteps):
         prev_radar_ts = radar_ts - t * timedelta(minutes=radar_accum_period)
-        if t == 0:
-            accum_start_ts = prev_radar_ts
         if not prev_radar_ts in radar_filenames.keys():
             num_missing += 1
         else:
@@ -215,14 +214,10 @@ while radar_ts <= enddate:
             num_found += 1
 
     if num_missing > int(config["missing_values"]["max_missing_radar_timestamps"]):
-        print(
-            f"  Skipping {radar_ts}: not enough previous files found for computing accumulated radar rainfall."
-        )
-    elif num_found == 0:
-        print(f"  No radar composites found between {accum_start_ts} - {radar_ts}.")
+        print("  Not enough radar composites found.")
     else:
         print(
-            f"  Computed radar accumulation between {accum_start_ts} - {radar_ts} from {num_found} time stamps."
+            f"  Computed radar accumulation between {accum_start_ts} - {radar_ts} from {num_found} time steps."
         )
         radar_rain_accum_cur /= num_found
         radar_rain_accum_cur *= gauge_accum_period / 60
@@ -270,7 +265,7 @@ while radar_ts <= enddate:
                         )
                         num_radar_gauge_pairs += 1
 
-            print(f"  Collected {num_radar_gauge_pairs} radar-gauge pairs.")
+            print(f"  Collected {num_radar_gauge_pairs} pairs.")
 
     radar_ts += timedelta(minutes=gauge_timestep)
 
