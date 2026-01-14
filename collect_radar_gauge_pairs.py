@@ -225,7 +225,10 @@ while radar_ts <= enddate:
 
         if radar_ts in gauge_obs.keys():
             num_radar_gauge_pairs = 0
+            num_radar_gauge_pairs_above_thr = 0
+
             g_cur = gauge_obs[radar_ts]
+
             for g in g_cur:
                 fmisid = g[0]
 
@@ -263,9 +266,13 @@ while radar_ts <= enddate:
                             g_obs,
                             attrs,
                         )
-                        num_radar_gauge_pairs += 1
+                        num_radar_gauge_pairs_above_thr += 1
 
-            print(f"  Collected {num_radar_gauge_pairs} pairs.")
+                    num_radar_gauge_pairs += 1
+
+            print(
+                f"  Collected {num_radar_gauge_pairs_above_thr} / {num_radar_gauge_pairs} pairs (above thr / total)."
+            )
 
     radar_ts += timedelta(minutes=gauge_timestep)
 
