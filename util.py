@@ -334,7 +334,7 @@ def query_netatmo(
                         station_obs.append((date, station_id, float(row[3])))
 
                         num_total_obs += 1
-                        num_obs[row[0]] += 1
+                        num_obs[station_id] += 1
 
         curdate_prev = curdate
         curdate = curdate + timedelta(days=1)
