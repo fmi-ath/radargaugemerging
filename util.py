@@ -1,7 +1,9 @@
 """Miscellaneous utility functions."""
 
 from collections import defaultdict
+import csv
 from datetime import datetime, timedelta
+import os
 import requests
 
 import numpy as np
@@ -248,6 +250,96 @@ def query_rain_gauges(
                     gauge_obs.append((obstime, fmisid, obs))
 
     return gauge_lonlat, gauge_obs
+
+
+def query_netatmo(
+    startdate,
+    enddate,
+    config,
+    ll_lon=None,
+    ll_lat=None,
+    ur_lon=None,
+    ur_lat=None,
+    data_path=None,
+):
+    """Query rain gauge observations and the corresponding gauge locations from
+    archived Netatmo files in the given date range.
+
+    Parameters
+    ----------
+    startdate : datetime.datetime
+        Start date for querying the gauge observations.
+    enddate : datetime.datetime
+        End date for querying the gauge observations.
+    config : dict
+        Configuration dictionary read from datasources.cfg, gauge subsection.
+    ll_lon, ll_lat, ur_lon, ur_lat : float
+        Bounding box coordinates. Gauges outside the box are not included.
+
+    Returns
+    -------
+    out : tuple
+        Two-element tuple containing gauge locations and gauge observations.
+    """
+    station_filename = os.path.join(data_path, "netatmo_suomi_asemat.csv")
+    reader = csv.reader(open(station_filename, "r"))
+
+    station_lonlat_dict = {}
+    station_id_dict = {}
+    for row in reader:
+        if reader.line_num > 1:
+            lat, lon = float(row[1]), float(row[2])
+            station_id = hash((lon, lat))
+            station_lonlat_dict[station_id] = (lon, lat)
+            station_id_dict[row[0]] = station_id
+
+    curdate_prev = datetime(1, 1, 1)
+    curdate = startdate
+
+    station_lonlat = set()
+    station_obs = []
+
+    while curdate <= enddate:
+        if curdate.month != curdate_prev.month:
+            filename = os.path.join(
+                data_path,
+                f"{curdate.year}",
+                f"netatmo_suomi_sade_{curdate.year}_{curdate.month:02d}.csv",
+            )
+            reader = csv.reader(open(filename, "r"))
+
+            num_obs = defaultdict(int)
+            num_total_obs = 0
+
+            for row in reader:
+                if reader.line_num > 1:
+                    if row[1] == "41":
+                        date = datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S")
+                        if date < startdate or date > enddate:
+                            continue
+
+                        station_id = station_id_dict[row[0]]
+                        lon, lat = station_lonlat_dict[station_id]
+                        station_lonlat.add((station_id, lon, lat))
+
+                        minute = date.minute - date.minute % 5
+                        date = datetime(
+                            year=date.year,
+                            month=date.month,
+                            day=date.day,
+                            hour=date.hour,
+                            minute=minute,
+                            second=0,
+                        )
+                        station_obs.append((date, station_id, float(row[3])))
+
+                        num_total_obs += 1
+                        num_obs[row[0]] += 1
+
+        curdate_prev = curdate
+        curdate = curdate + timedelta(days=1)
+
+    return station_lonlat, station_obs
 
 
 def read_radar_locations(config):
