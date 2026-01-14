@@ -92,7 +92,11 @@ browser = radar_archive.Browser(
 )
 
 # read radar file names from the archive
-curdate = startdate
+curdate = startdate - timedelta(
+    minutes=max(
+        int(config_ds["radar"]["accum_period"]), int(config_ds["gauge"]["accum_period"])
+    )
+)
 radar_filenames = {}
 
 while curdate <= enddate:
