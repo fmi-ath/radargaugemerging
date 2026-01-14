@@ -111,17 +111,24 @@ while curdate <= enddate:
 cols = ["lpnn", "lat", "lat_sec", "lon", "lon_sec", "grlat", "grlon", "nvl(elstat,0)"]
 col_names = ["lpnn", "lat", "lat_sec", "lon", "lon_sec", "grlat", "grlon", "elstat"]
 
-print("Querying gauge observations from SmartMet: ", end="", flush=True)
+if config_ds["gauge"]["gauge_type"] != "NETATMO":
+    print("Querying FMI gauges from SmartMet: ", end="", flush=True)
 
-gauge_lonlat, gauge_obs = util.query_rain_gauges(
-    startdate,
-    enddate,
-    config_gauge,
-    ll_lon=float(config["bbox"]["ll_lon"]),
-    ll_lat=float(config["bbox"]["ll_lat"]),
-    ur_lon=float(config["bbox"]["ur_lon"]),
-    ur_lat=float(config["bbox"]["ur_lat"]),
-)
+    gauge_lonlat, gauge_obs = util.query_rain_gauges(
+        startdate,
+        enddate,
+        config_gauge,
+        ll_lon=float(config["bbox"]["ll_lon"]),
+        ll_lat=float(config["bbox"]["ll_lat"]),
+        ur_lon=float(config["bbox"]["ur_lon"]),
+        ur_lat=float(config["bbox"]["ur_lat"]),
+    )
+else:
+    print("Querying Netatmo: ", end="", flush=True)
+
+    gauge_lonlat, gauge_obs = util.query_netatmo(
+        startdate, enddate, config_gauge, data_path="/data/seppo/netatmo"
+    )
 
 if config_ds["gauge"]["accumulate"] == "true":
     gauge_obs = util.compute_gauge_accumulations(
