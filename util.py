@@ -315,12 +315,6 @@ def query_netatmo(
                 if reader.line_num > 1:
                     if row[1] == "41":
                         date = datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S")
-                        if date < startdate or date > enddate:
-                            continue
-
-                        station_id = station_id_dict[row[0]]
-                        lon, lat = station_lonlat_dict[station_id]
-                        station_lonlat.add((station_id, lon, lat))
 
                         minute = date.minute - date.minute % 5
                         date = datetime(
@@ -331,6 +325,13 @@ def query_netatmo(
                             minute=minute,
                             second=0,
                         )
+                        if date < startdate or date > enddate:
+                            continue
+
+                        station_id = station_id_dict[row[0]]
+                        lon, lat = station_lonlat_dict[station_id]
+                        station_lonlat.add((station_id, lon, lat))
+
                         station_obs.append((date, station_id, float(row[3])))
 
                         num_total_obs += 1
