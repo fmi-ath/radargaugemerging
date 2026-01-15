@@ -93,9 +93,7 @@ browser = radar_archive.Browser(
 
 # read radar file names from the archive
 curdate = startdate - timedelta(
-    minutes=max(
-        int(config_ds["radar"]["accum_period"]), int(config_ds["gauge"]["accum_period"])
-    )
+    minutes=max(int(config_ds["radar"]["accum_period"]), gauge_accum_period)
 )
 radar_filenames = {}
 
@@ -118,8 +116,13 @@ col_names = ["lpnn", "lat", "lat_sec", "lon", "lon_sec", "grlat", "grlon", "elst
 if config_ds["gauge"]["gauge_type"] != "NETATMO":
     print("Querying FMI gauges from SmartMet: ", end="", flush=True)
 
+    if config_ds["gauge"]["accumulate"] == "true":
+        gauge_startdate = startdate - timedelta(minutes=gauge_accum_period)
+    else:
+        gauge_startdate = startdate
+
     gauge_lonlat, gauge_obs = util.query_rain_gauges(
-        startdate,
+        startdate - timedelta(minutes=gauge_accum_period),
         enddate,
         config_gauge,
         ll_lon=float(config["bbox"]["ll_lon"]),
