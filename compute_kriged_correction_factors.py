@@ -95,7 +95,8 @@ grid_y += 0.5 * (grid_y[1] - grid_y[0])
 grid_y = grid_y[:-1]
 
 ts = datetime.strptime(args.outtime, "%Y%m%d%H%M")
-grid_z = np.ones((1,)) * ts.timestamp()
+if int(config["kriging"]["dimensions"]) == 3:
+    grid_z = np.ones((1,)) * ts.timestamp()
 
 max_dist_to_nearest_radar = float(config["output"]["max_dist_to_nearest_radar"])
 if max_dist_to_nearest_radar > 0 or config["kriging"]["method"] == "regression":
@@ -117,10 +118,14 @@ if max_dist_to_nearest_radar > 0 or config["kriging"]["method"] == "regression":
     )
 
 if config["kriging"]["method"] == "ordinary":
-    zvalues, sigmasq = model.execute("grid", grid_x, grid_y, grid_z)
+    if int(config["kriging"]["dimensions"]) == 2:
+        zvalues, sigmasq = model.execute("grid", grid_x, grid_y)
+    else:
+        zvalues, sigmasq = model.execute("grid", grid_x, grid_y, grid_z)
 
-    zvalues = zvalues[0, :]
-    sigmasq = sigmasq[0, :]
+    if int(config["kriging"]["dimensions"]) == 3:
+        zvalues = zvalues[0, :]
+        sigmasq = sigmasq[0, :]
 
     if isinstance(zvalues, np.ma.MaskedArray):
         zvalues.set_fill_value(np.nan)
@@ -133,9 +138,12 @@ else:
     n_x = len(grid_x)
     n_y = len(grid_y)
     grid_x, grid_y = np.meshgrid(grid_x, grid_y)
-    xp = np.column_stack(
-        [grid_x.flatten(), grid_y.flatten(), grid_z[0] * np.ones(grid_x.size)]
-    )
+    if int(config["kriging"]["dimensions"]) == 2:
+        xp = np.column_stack([grid_x.flatten(), grid_y.flatten()])
+    else:
+        xp = np.column_stack(
+            [grid_x.flatten(), grid_y.flatten(), grid_z[0] * np.ones(grid_x.size)]
+        )
     zvalues = model.predict(p, xp).reshape((n_y, n_x))
     sigmasq = np.zeros(zvalues.shape)
 
