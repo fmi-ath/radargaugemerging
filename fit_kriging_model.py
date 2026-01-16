@@ -62,6 +62,8 @@ if int(config["kriging"]["dimensions"]) == 3:
     z = []
 val = []
 
+epsilon = float(config["kriging"]["epsilon"])
+
 for timestamp in radar_gauge_pairs.keys():
     for fmisid in radar_gauge_pairs[timestamp].keys():
         p = radar_gauge_pairs[timestamp][fmisid]
@@ -71,7 +73,7 @@ for timestamp in radar_gauge_pairs.keys():
         y.append(y_)
         if int(config["kriging"]["dimensions"]) == 3:
             z.append(timestamp.timestamp())
-        val.append(np.log10(p[1] / p[0]))
+        val.append(np.log10((p[1] + epsilon) / (p[0] + epsilon)))
 
 if len(val) < int(config["kriging"]["min_valid_points"]):
     raise Exception(
