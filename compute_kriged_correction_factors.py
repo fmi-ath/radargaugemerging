@@ -42,7 +42,9 @@ from rasterio import features
 import shapely
 import yaml
 
+import importers
 import exporters
+import radar_archive
 import util
 
 # parse command-line arguments
@@ -98,8 +100,14 @@ ts = datetime.strptime(args.outtime, "%Y%m%d%H%M")
 if int(config["kriging"]["dimensions"]) == 3:
     grid_z = np.ones((1,)) * ts.timestamp()
 
+if config["kriging"]["method"] == "regression":
+    regr_vars = config["regression"]["variables"].split(",")
+
 max_dist_to_nearest_radar = float(config["output"]["max_dist_to_nearest_radar"])
-if max_dist_to_nearest_radar > 0 or config["kriging"]["method"] == "regression":
+# TODO: move this into separate module
+if max_dist_to_nearest_radar > 0 or (
+    config["kriging"]["method"] == "regression" and "distance" in regr_vars
+):
     # project radar locations to grid coordinates
     radar_xy = {}
     for radar in radar_locs.keys():
@@ -134,7 +142,41 @@ if config["kriging"]["method"] == "ordinary":
     xp = model.X_ORIG
     yp = model.Y_ORIG
 else:
-    p = radar_dist_grid.flatten()[:, np.newaxis]
+    regr_var_values = [[] for i in range(len(regr_vars))]
+
+    for regr_var in regr_vars:
+        # TODO: move these into separate module
+        if regr_var == "distance":
+            p = radar_dist_grid.flatten()[:, np.newaxis]
+        elif regr_var == "radar_rain":
+            config_ds = configparser.ConfigParser(interpolation=None)
+            config_ds.read(os.path.join("config", args.profile, "datasources.cfg"))
+            config_radar = config_ds["radar"]
+
+            browser = radar_archive.Browser(
+                config_radar["root_path"],
+                config_radar["path_fmt"],
+                config_radar["fn_pattern"],
+                config_radar["fn_exts"].split(","),
+                0,
+            )
+
+            try:
+                fn = browser.listfiles(ts)
+
+                if os.path.exists(fn[0][0]):
+                    fn = fn[0][0]
+                    print(f"Found radar file {os.path.basename(fn)}")
+            except FileNotFoundError:
+                print(f"Radar file not found for {ts}")
+
+            importer = importers.get_method(config_radar["importer"])
+            radar_rain, _ = importer(fn, **config_ds["radar_importer_kwargs"])
+            radar_rain[~np.isfinite(radar_rain)] = 0
+            # TODO: check that distance and radar rain rate files are not upside down
+            radar_rain = np.flipud(radar_rain)
+            p = radar_rain.flatten()[:, np.newaxis]
+
     n_x = len(grid_x)
     n_y = len(grid_y)
     grid_x, grid_y = np.meshgrid(grid_x, grid_y)

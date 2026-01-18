@@ -256,6 +256,9 @@ while radar_ts <= enddate:
 
                     attrs = {}
 
+                    if "radar_rain" in rgpair_attribs:
+                        attrs["radar_rain"] = r_obs
+
                     if "distance_to_radar" in rgpair_attribs:
                         attrs["distance_to_radar"] = (
                             util.compute_distance_to_nearest_radar(

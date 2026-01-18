@@ -131,12 +131,17 @@ else:
             "sklearn needed for fitting regression models not found"
         )
 
-    dists = []
-    for timestamp in radar_gauge_pairs.keys():
-        for fmisid in radar_gauge_pairs[timestamp].keys():
-            dists.append(radar_gauge_pairs[timestamp][fmisid][2]["distance_to_radar"])
+    regr_vars = config["regression"]["variables"].split(",")
+    regr_var_values = [[] for i in range(len(regr_vars))]
 
-    dists = np.array(dists)[mask]
+    for i, regr_var in enumerate(regr_vars):
+        for timestamp in radar_gauge_pairs.keys():
+            for fmisid in radar_gauge_pairs[timestamp].keys():
+                regr_var_values[i].append(
+                    radar_gauge_pairs[timestamp][fmisid][2][regr_var]
+                )
+
+    regr_var_values = np.column_stack(regr_var_values)[mask, :]
 
     regression_model = LinearRegression()
 
@@ -160,6 +165,6 @@ else:
         if int(config["kriging"]["dimensions"]) == 3
         else np.column_stack([x, y])
     )
-    model.fit(dists[:, np.newaxis], points, val)
+    model.fit(regr_var_values, points, val)
 
 pickle.dump(model, open(args.outfile, "wb"))
