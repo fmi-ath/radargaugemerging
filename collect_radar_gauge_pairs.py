@@ -159,6 +159,8 @@ for radar in radar_locs.keys():
 
 # insert gauge locations (in grid coordinates and normalized to range [0,1])
 # into a dictionary
+# TODO: use rasterio to find the pixel locations corresponding to the gauge
+# coordinates
 gauge_xy = {}
 gauge_xy_n = {}
 for g in gauge_lonlat:
@@ -242,6 +244,8 @@ while radar_ts <= enddate:
                 if excluded_station_ids is not None and fmisid in excluded_station_ids:
                     continue
 
+                # TODO: use rasterio to find the pixel locations corresponding
+                # to the gauge coordinates
                 x, y = gauge_xy_n[fmisid][0], gauge_xy_n[fmisid][1]
                 x_ = int(np.floor(x * radar_rain_accum_shape[1]))
                 y_ = int(np.floor(y * radar_rain_accum_shape[0]))
