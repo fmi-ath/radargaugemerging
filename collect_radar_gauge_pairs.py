@@ -107,7 +107,7 @@ while curdate <= enddate:
     except FileNotFoundError:
         print(f"Radar data not found for {curdate}")
 
-    curdate += timedelta(minutes=radar_accum_period)
+    curdate += timedelta(minutes=radar_timestep)
 
 # read gauge observations from SmartMet
 cols = ["lpnn", "lat", "lat_sec", "lon", "lon_sec", "grlat", "grlon", "nvl(elstat,0)"]
